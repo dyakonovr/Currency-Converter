@@ -6,9 +6,8 @@ function App() {
   const [inputValue, setInputValue] = useState(0);
   const [dataIsLoaded, setDataIsLoaded] = useState(false);
   const [items, setItems] = useState();
+  const [currentCurrencies, setCurrentCurrencies] = useState({ first: "RUB", second: "USD" });
   const [error, setError] = useState();
-  const [firstBlockCurrency, setFirstBlockCurrency] = useState('RUB');
-  const [secondBlockCurrency, setSecondBlockCurrency] = useState('USD');
 
   const inputFromRef = useRef(null);
   const inputToRef = useRef(null);
@@ -33,14 +32,6 @@ function App() {
   // Получение курсов валют END
 
   // Функции
-  function numberWithSpaces(x) { // "15000" -> "15 000"
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  }
-
-  function backToNumber(x) { // "15 000" -> "15000"
-    return Number(x.replace(/\s/g, ''));
-  }
-
   function handleInput() {
     // Очищаю <input> от букв и разделяю число по разрядам
     inputFromRef.current.value = numberWithSpaces(inputFromRef.current.value.replace(/\D/g, ''));
@@ -56,10 +47,11 @@ function App() {
     setInputValue(valueTo);
   }
 
-  // function swapBlocks() {
-  //   const inputsValue = [inputFromRef.current.value || "0", inputToRef.current.value];
-  //   const currenciesArray = [inputFromRef.current.dataset.currency, inputToRef.current.dataset.currency];
-  // }
+  function swapBlocks() {
+    const currenciesArray = [inputFromRef.current.dataset.currency, inputToRef.current.dataset.currency];
+    // Меняю активные валюты местами
+    setCurrentCurrencies({ first: currenciesArray[1], second: currenciesArray[0] });
+  }
   // Функции END
 
   if (error) {
@@ -71,21 +63,31 @@ function App() {
   } else {
     return (
       <div className="App">
-        <Block handleInput={handleInput} items={items}
-          listNumber={1} currentCurrency={firstBlockCurrency}
-          changeCurrency={setFirstBlockCurrency} inputRef={inputFromRef}
+        <Block handleInput={handleInput} items={items} activeCurrencies={currentCurrencies}
+          listNumber={1} currentCurrency={currentCurrencies["first"]}
+          changeCurrency={setCurrentCurrencies} inputRef={inputFromRef}
         />
 
-        {/* <span className='swap-btn' onClick={swapBlocks}></span> */}
+        <span className='swap-btn' onClick={swapBlocks}></span>
 
-        <Block handleInput={handleInput} items={items}
-          listNumber={2} currentCurrency={secondBlockCurrency}
-          changeCurrency={setSecondBlockCurrency} inputRef={inputToRef}
+        <Block handleInput={handleInput} items={items} activeCurrencies={currentCurrencies}
+          listNumber={2} currentCurrency={currentCurrencies["second"]}
+          changeCurrency={setCurrentCurrencies} inputRef={inputToRef}
           inputValue={inputValue} readonly={true}
         />
       </div>
     );
   }
+}
+
+
+// Вспомогательные функции
+function numberWithSpaces(x) { // "15000" -> "15 000"
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+function backToNumber(x) { // "15 000" -> "15000"
+  return Number(x.replace(/\s/g, ''));
 }
 
 export default App;

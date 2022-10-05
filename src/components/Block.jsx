@@ -1,12 +1,15 @@
-import { useEffect } from 'react';
-import { useRef } from 'react';
-
+import { useEffect, useRef } from 'react';
 
 const Block = (props) => {
-  const { handleInput, inputValue, items, listNumber, currentCurrency, changeCurrency, inputRef, readonly } = props;
-  const mainCurrencies = ['RUB', 'EUR', 'USD', Object.keys(items)[0]];
+  const { handleInput, inputValue, items, listNumber, currentCurrency, changeCurrency, inputRef, readonly, activeCurrencies } = props;
+  let mainCurrencies = ['RUB', 'EUR', 'USD'];
   const lastCurrencyBtn = useRef(null); // Ссылка на кнопку со стрелкой
   const listRef = useRef(null);
+
+  // Если выбрана валюта, которая после swapBlocks не будет рендерится в списке активных
+  if (!mainCurrencies.includes(currentCurrency)) mainCurrencies.push(currentCurrency);
+  // Иначе в будущем рендерить первую валюту из JSON 
+  else mainCurrencies.push(Object.keys(items)[0]);
 
   // Создаю список главных валют
   const currenciesList = mainCurrencies.map((el, i) => {
@@ -25,14 +28,13 @@ const Block = (props) => {
   });
   // Создаю список главных валют END
 
-  // Создание листа с курсами валют
+  // Создание листа с курсами всех валют
   let allCurrenciesList = Object.keys(items).map((el, index) => { return <li className="currencies__item" key={index}>{el}</li>; });
-  // Создание листа с курсами валют END
+  // Создание листа с курсами всех валют END
 
   // Обновляю валюты в INPUT'ах
-  useEffect(() => { handleInput() }, [handleInput]);
+  useEffect(handleInput, [handleInput]);
   // Обновляю валюты в INPUT'ах END
-
 
   // Функции
   function toggleInnerList(btn) {
@@ -65,8 +67,15 @@ const Block = (props) => {
 
     activeElem.classList.remove('currency--active');
     currentElem.classList.add('currency--active');
-    changeCurrency(currentElem.innerHTML);
+
+    // Изменяю State активных валют
+    if (listNumber === 1) { // Если изменилась активная валюта в 1-ом списке
+      changeCurrency({ first: currentElem.innerHTML, second: activeCurrencies.second });
+    } else {
+      changeCurrency({ first: activeCurrencies.first, second: currentElem.innerHTML });
+    }
   }
+
   // Функции END
 
   return (
@@ -83,7 +92,15 @@ const Block = (props) => {
       </ul>
       <input type="text" className="input" onChange={handleInput} value={inputValue}
         data-currency={currentCurrency} ref={inputRef} placeholder={0} readOnly={readonly || false} />
-    </div>
+      <span className='value'>{
+
+        // Если наша валюта - это USD, то мы получаем курс напрямую из списка
+        // Иначе мы возвращаем 1 / курс валюты (относительно доллара) из списка
+        listNumber === 1 ? `1 ${activeCurrencies.first} = ${activeCurrencies.first === "USD" ? items[activeCurrencies.second] : 1 / items[activeCurrencies.first]} ${activeCurrencies.second}`
+          : `1 ${activeCurrencies.second} = ${activeCurrencies.second === "USD" ? items[activeCurrencies.first] : 1 / items[activeCurrencies.second]} ${activeCurrencies.first}`
+
+      }</span>
+    </div >
   );
 
 };
